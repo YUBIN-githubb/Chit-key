@@ -556,11 +556,11 @@ ChitkeyError(Exception)              # 모든 커스텀 예외의 base
 ## 12. Next Steps
 
 1. [x] 플랜 문서 작성 (DB 스키마 + 에러 핸들링 전략 포함)
-2. [ ] FastAPI 프로젝트 초기화 (`requirements.txt`, `app/main.py`, 폴더 구조)
-3. [ ] **전역 에러 핸들링 구현** (`app/core/exceptions.py`, `app/core/error_handlers.py`)
-4. [ ] 환경변수 설정 (`app/core/config.py`, `.env.example`)
-5. [ ] Supabase 클라이언트 초기화 (`app/core/supabase.py`)
-6. [ ] Claude API Key 암호화 유틸 (`app/core/security.py`)
+2. [x] FastAPI 프로젝트 초기화 (`requirements.txt`, `app/main.py`, 폴더 구조)
+3. [x] **전역 에러 핸들링 구현** (`app/core/exceptions.py`, `app/core/error_handlers.py`)
+4. [x] 환경변수 설정 (`app/core/config.py`, `.env.example`)
+5. [x] Supabase 클라이언트 초기화 (`app/core/supabase.py`)
+6. [x] Claude API Key 암호화 유틸 (`app/core/security.py`)
 7. [ ] Supabase DB 테이블 생성 SQL + RLS 정책
 8. [ ] Google OAuth + Supabase Auth 연동 (`/api/v1/auth/`)
 9. [ ] 사용자 프로필 + 온보딩 API (`/api/v1/users/`)
