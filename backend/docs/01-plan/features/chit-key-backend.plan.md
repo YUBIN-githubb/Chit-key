@@ -561,13 +561,13 @@ ChitkeyError(Exception)              # 모든 커스텀 예외의 base
 4. [x] 환경변수 설정 (`app/core/config.py`, `.env.example`)
 5. [x] Supabase 클라이언트 초기화 (`app/core/supabase.py`)
 6. [x] Claude API Key 암호화 유틸 (`app/core/security.py`)
-7. [ ] Supabase DB 테이블 생성 SQL + RLS 정책
-8. [ ] Google OAuth + Supabase Auth 연동 (`/api/v1/auth/`)
-9. [ ] 사용자 프로필 + 온보딩 API (`/api/v1/users/`)
-10. [ ] 경험 CRUD API (`/api/v1/experiences/`)
-11. [ ] 채팅 세션·메시지 API (`/api/v1/chats/`)
-12. [ ] 에이전트 루프 base.py + 3개 에이전트 구현 (`/api/v1/agents/`)
-13. [ ] 산출물 artifact API (`/api/v1/artifacts/`)
+7. [x] Supabase DB 테이블 생성 SQL + RLS 정책 (`supabase/schema.sql`)
+8. [x] Google OAuth + Supabase Auth 연동 (Supabase Auth 위임 + `deps.py` JWT 검증)
+9. [x] 사용자 프로필 + 온보딩 API (`/api/v1/users/`)
+10. [x] 경험 CRUD API (`/api/v1/experiences/`)
+11. [x] 채팅 세션·메시지 API (`/api/v1/chats/`)
+12. [x] 에이전트 루프 base.py + 3개 에이전트 구현 (`/api/v1/agents/`)
+13. [x] 산출물 artifact API (`/api/v1/artifacts/`)
 14. [ ] `essay-writer.md` 프롬프트 작성
 15. [ ] 전체 통합 테스트
 
