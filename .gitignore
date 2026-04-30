@@ -1,3 +1,13 @@
 .bkit/
 backend/.bkit
 frontend/.bkit
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 환경변수
+backend/.env
+frontend/.env
+frontend/.env.local
