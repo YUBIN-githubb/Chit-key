@@ -23,14 +23,16 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     supabase = get_supabase()
     result = (
         supabase.table("users")
-        .select("id, email, nickname, onboarding_completed, created_at")
+        .select("id, email, nickname, onboarding_completed, claude_api_key_encrypted, created_at")
         .eq("id", current_user["id"])
         .single()
         .execute()
     )
     if not result.data:
         raise NotFoundError("사용자를 찾을 수 없습니다.")
-    return result.data
+    data = result.data
+    data["has_api_key"] = bool(data.pop("claude_api_key_encrypted", None))
+    return data
 
 
 @router.patch("/me")
