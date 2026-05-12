@@ -33,8 +33,8 @@ export default function AgentInputPanel({ artifacts, onCompany, onQuestion, onEs
         ))}
       </div>
 
-      {activeTab === 'company' && <CompanyForm onSubmit={onCompany} loading={loading} />}
-      {activeTab === 'question' && <QuestionForm onSubmit={onQuestion} loading={loading} artifacts={artifacts} />}
+      {activeTab === 'company' && <CompanyForm  onSubmit={onCompany}  loading={loading} />}
+      {activeTab === 'question' && <QuestionForm onSubmit={onQuestion} loading={loading} />}
       {activeTab === 'essay'    && <EssayForm    onSubmit={onEssay}    loading={loading} artifacts={artifacts} />}
     </div>
   )
@@ -55,14 +55,10 @@ function CompanyForm({ onSubmit, loading }) {
 }
 
 // ── 문항분석 폼 ────────────────────────────────────────────────────────────────
-function QuestionForm({ onSubmit, loading, artifacts }) {
+function QuestionForm({ onSubmit, loading }) {
   const [company, setCompany]     = useState('')
   const [position, setPosition]   = useState('')
   const [questions, setQuestions] = useState([{ question: '', char_limit: '' }])
-  const [attached, setAttached]   = useState(null)  // { id, title, agent_type }
-  const [pickerOpen, setPickerOpen] = useState(false)
-
-  const companyArtifacts = artifacts.filter(a => a.agent_type === 'company-analyze')
 
   const addQ    = () => setQuestions(q => [...q, { question: '', char_limit: '' }])
   const removeQ = (i) => setQuestions(q => q.filter((_, idx) => idx !== i))
@@ -74,33 +70,15 @@ function QuestionForm({ onSubmit, loading, artifacts }) {
     onSubmit({
       company: company.trim(), position: position.trim(),
       questions: valid.map(q => ({ question: q.question.trim(), char_limit: q.char_limit ? parseInt(q.char_limit) : null })),
-      company_artifact_id: attached?.id || null,
     })
   }
 
   return (
-    <div style={{ position: 'relative' }}>
-      {pickerOpen && (
-        <ArtifactPicker
-          artifacts={companyArtifacts}
-          onSelect={setAttached}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
+    <div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
         <InputField label="기업명" value={company} onChange={setCompany} placeholder="예: 카카오" />
         <InputField label="직무" value={position} onChange={setPosition} placeholder="예: 백엔드 개발자" />
       </div>
-
-      {/* 첨부 영역 */}
-      <AttachBar
-        attached={attached}
-        onAttach={() => setPickerOpen(p => !p)}
-        onDetach={() => setAttached(null)}
-        label="기업분석 결과 첨부"
-        disabled={companyArtifacts.length === 0}
-      />
-
       <label style={labelSt}>자소서 문항</label>
       {questions.map((q, i) => (
         <QuestionRow key={i} q={q} i={i} onChange={updateQ} onRemove={removeQ} canRemove={questions.length > 1} />
@@ -115,17 +93,25 @@ function QuestionForm({ onSubmit, loading, artifacts }) {
 
 // ── 자소서작성 폼 ───────────────────────────────────────────────────────────────
 function EssayForm({ onSubmit, loading, artifacts }) {
-  const [company, setCompany]     = useState('')
-  const [position, setPosition]   = useState('')
-  const [questions, setQuestions] = useState([{ question: '', char_limit: '' }])
-  const [attached, setAttached]   = useState(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
+  const [company, setCompany]         = useState('')
+  const [position, setPosition]       = useState('')
+  const [questions, setQuestions]     = useState([{ question: '', char_limit: '' }])
+  const [attachedCompany, setAttachedCompany]   = useState(null)
+  const [attachedQuestion, setAttachedQuestion] = useState(null)
+  const [pickerTarget, setPickerTarget] = useState(null) // 'company' | 'question' | null
 
+  const companyArtifacts  = artifacts.filter(a => a.agent_type === 'company-analyze')
   const questionArtifacts = artifacts.filter(a => a.agent_type === 'question-analyze')
 
   const addQ    = () => setQuestions(q => [...q, { question: '', char_limit: '' }])
   const removeQ = (i) => setQuestions(q => q.filter((_, idx) => idx !== i))
   const updateQ = (i, k, v) => setQuestions(q => q.map((item, idx) => idx === i ? { ...item, [k]: v } : item))
+
+  const handlePickerSelect = (artifact) => {
+    if (pickerTarget === 'company')  setAttachedCompany(artifact)
+    if (pickerTarget === 'question') setAttachedQuestion(artifact)
+    setPickerTarget(null)
+  }
 
   const handleSubmit = () => {
     const valid = questions.filter(q => q.question.trim())
@@ -133,17 +119,23 @@ function EssayForm({ onSubmit, loading, artifacts }) {
     onSubmit({
       company: company.trim(), position: position.trim(),
       questions: valid.map(q => ({ question: q.question.trim(), char_limit: q.char_limit ? parseInt(q.char_limit) : null })),
-      question_artifact_id: attached?.id || null,
+      company_artifact_id:  attachedCompany?.id  || null,
+      question_artifact_id: attachedQuestion?.id || null,
     })
   }
 
+  const pickerArtifacts = pickerTarget === 'company' ? companyArtifacts : questionArtifacts
+
+  const pickerTitle = pickerTarget === 'company' ? '기업분석 결과 선택' : '문항분석 결과 선택'
+
   return (
     <div style={{ position: 'relative' }}>
-      {pickerOpen && (
+      {pickerTarget && (
         <ArtifactPicker
-          artifacts={questionArtifacts}
-          onSelect={setAttached}
-          onClose={() => setPickerOpen(false)}
+          artifacts={pickerArtifacts}
+          title={pickerTitle}
+          onSelect={handlePickerSelect}
+          onClose={() => setPickerTarget(null)}
         />
       )}
       <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
@@ -152,9 +144,16 @@ function EssayForm({ onSubmit, loading, artifacts }) {
       </div>
 
       <AttachBar
-        attached={attached}
-        onAttach={() => setPickerOpen(p => !p)}
-        onDetach={() => setAttached(null)}
+        attached={attachedCompany}
+        onAttach={() => setPickerTarget('company')}
+        onDetach={() => setAttachedCompany(null)}
+        label="기업분석 결과 첨부"
+        disabled={companyArtifacts.length === 0}
+      />
+      <AttachBar
+        attached={attachedQuestion}
+        onAttach={() => setPickerTarget('question')}
+        onDetach={() => setAttachedQuestion(null)}
         label="문항분석 결과 첨부"
         disabled={questionArtifacts.length === 0}
       />

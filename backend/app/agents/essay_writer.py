@@ -14,6 +14,7 @@ def run_essay_writer(
     company: str,
     position: str,
     questions: list,
+    company_artifact: dict | None = None,
     question_artifact: dict | None = None,
     api_key: str,
 ) -> str:
@@ -25,6 +26,13 @@ def run_essay_writer(
         return f"{i+1}. {q.question}{limit_str}"
 
     question_list = "\n".join(_fmt(i, q) for i, q in enumerate(questions))
+
+    company_section = ""
+    if company_artifact:
+        company_section = (
+            "\n\n[기업 분석 결과]\n"
+            + json.dumps(company_artifact, ensure_ascii=False, indent=2)
+        )
 
     question_section = ""
     if question_artifact:
@@ -38,6 +46,7 @@ def run_essay_writer(
         f"직무: {position}\n\n"
         f"자소서 문항:\n{question_list}\n\n"
         f"위 문항에 맞는 자소서 초안을 작성해 주세요."
+        f"{company_section}"
         f"{question_section}"
     )
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getChats, deleteChat } from '../services/api'
+import { getChats, deleteChat, updateChatTitle } from '../services/api'
 
 export function useChats() {
   return useQuery({
@@ -12,6 +12,14 @@ export function useDeleteChat() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: deleteChat,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['chats'] }),
+  })
+}
+
+export function useUpdateChatTitle() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ chatId, title }) => updateChatTitle(chatId, title),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['chats'] }),
   })
 }

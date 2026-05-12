@@ -1,4 +1,3 @@
-import json
 import logging
 
 from app.agents.base import run_agent
@@ -18,7 +17,6 @@ def run_question_analyze(
     company: str,
     position: str,
     questions: list,
-    company_artifact: dict | None = None,
     api_key: str,
 ) -> str:
     logger.info("[QuestionAnalyze] 시작 | company=%s position=%s questions=%d개", company, position, len(questions))
@@ -30,18 +28,10 @@ def run_question_analyze(
 
     question_list = "\n".join(_fmt(i, q) for i, q in enumerate(questions))
 
-    company_section = ""
-    if company_artifact:
-        company_section = (
-            "\n\n[기업 분석 리포트]\n"
-            + json.dumps(company_artifact, ensure_ascii=False, indent=2)
-        )
-
     user_message = (
         f"기업: {company}\n"
         f"직무: {position}\n\n"
         f"자소서 문항:\n{question_list}"
-        f"{company_section}"
     )
 
     return run_agent(

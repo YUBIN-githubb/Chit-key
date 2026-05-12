@@ -31,12 +31,11 @@ export default function AppShell({ profile, apiKeyRegistered, tab, setTab, onNew
         {/* 로고 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', marginBottom: 32 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 11,
+            width: 38, height: 38, borderRadius: 11, flexShrink: 0,
             background: `linear-gradient(135deg, ${colors.PRIMARY}, ${colors.PRIMARY_DARK})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, color: '#fff', fontWeight: 800,
-            boxShadow: `0 4px 12px ${colors.PRIMARY}40`,
-          }}>✦</div>
+            fontSize: 20, boxShadow: `0 4px 12px ${colors.PRIMARY}40`,
+          }}>🗝️</div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: colors.TEXT_PRIMARY, letterSpacing: '-0.3px' }}>취트키</div>
             <div style={{ fontSize: 11, color: colors.TEXT_SECONDARY }}>AI 자소서 도우미</div>

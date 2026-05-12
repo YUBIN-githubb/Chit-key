@@ -87,7 +87,9 @@
 | FR-02 | 온보딩 완료 여부 플래그 관리 (닉네임·API Key·첫 경험 등록 시 완료) | High | Pending |
 | FR-03 | 사용자 Claude API Key를 AES-256으로 암호화하여 DB 저장, 에이전트 호출 시 복호화 | High | Pending |
 | FR-04 | 경험 CRUD: 경험이름·역할·활동기간·STAR 4개 필드·역량 태그 배열 | High | Pending |
-| FR-05 | 채팅 세션 생성·목록·상세 조회 (제목 자동 생성 또는 사용자 지정) | High | Pending |
+| FR-05 | 채팅 세션 생성·목록·상세 조회 (기본 제목: "새 채팅 MM.DD HH:mm") | High | Pending |
+| FR-05a | 채팅 제목 수정 API (`PATCH /chats/{id}`) — 사용자가 직접 이름 변경 | High | Pending |
+| FR-05b | 기업분석 에이전트 완료 시 채팅 제목 자동 갱신: `"{company} {position} 자소서"`. 기업분석 없이 문항분석만 실행된 경우 `"문항분석 {n}개 - MM.DD"` | High | Pending |
 | FR-06 | 채팅 메시지 저장·조회 (role: user/assistant, agent_type 필드) | High | Pending |
 | FR-07 | 기업분석 에이전트 호출: 사용자 Claude API Key로 에이전트 루프 실행 | High | Pending |
 | FR-08 | 문항분석 에이전트 호출: 기업분석 산출물 artifact_id를 컨텍스트로 주입 가능 | High | Pending |
@@ -206,7 +208,7 @@ users ──< experiences
 |--------|------|-------------|-------------|
 | `id` | UUID | PK, default gen_random_uuid() | 채팅 세션 ID |
 | `user_id` | UUID | FK → users.id, NOT NULL | 소유 사용자 |
-| `title` | VARCHAR(200) | NULL | 채팅 제목 (NULL이면 첫 메시지로 자동 생성) |
+| `title` | VARCHAR(200) | NOT NULL, DEFAULT '새 채팅' | 채팅 제목. 생성 시 "새 채팅 MM.DD HH:mm" 형태로 저장. 기업분석 완료 시 자동 갱신, 또는 사용자가 직접 수정 가능 |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | 생성일시 |
 | `updated_at` | TIMESTAMPTZ | DEFAULT now() | 최근 메시지 시각 |
 
@@ -536,8 +538,9 @@ ChitkeyError(Exception)              # 모든 커스텀 예외의 base
 | PUT | `/api/v1/experiences/{id}` | 경험 수정 | JWT |
 | DELETE | `/api/v1/experiences/{id}` | 경험 삭제 | JWT |
 | GET | `/api/v1/chats` | 채팅 목록 | JWT |
-| POST | `/api/v1/chats` | 채팅 생성 | JWT |
+| POST | `/api/v1/chats` | 채팅 생성 (body: `{title?: string}`) | JWT |
 | GET | `/api/v1/chats/{id}` | 채팅 상세 + 메시지 | JWT |
+| PATCH | `/api/v1/chats/{id}` | 채팅 제목 수정 (body: `{title: string}`) | JWT |
 | DELETE | `/api/v1/chats/{id}` | 채팅 삭제 | JWT |
 | POST | `/api/v1/agents/company-analyze` | 기업분석 에이전트 실행 | JWT |
 | POST | `/api/v1/agents/question-analyze` | 문항분석 에이전트 실행 | JWT |
@@ -569,7 +572,12 @@ ChitkeyError(Exception)              # 모든 커스텀 예외의 base
 12. [x] 에이전트 루프 base.py + 3개 에이전트 구현 (`/api/v1/agents/`)
 13. [x] 산출물 artifact API (`/api/v1/artifacts/`)
 14. [ ] `essay-writer.md` 프롬프트 작성
-15. [ ] 전체 통합 테스트
+15. [ ] 채팅 제목 관리 구현
+    - `POST /chats` — title 기본값 "새 채팅 MM.DD HH:mm" 생성 로직 추가
+    - `PATCH /chats/{id}` — 제목 수정 엔드포인트 구현
+    - `agents.py` 기업분석 완료 후 `UPDATE chats SET title = "{company} {position} 자소서"` 자동 실행
+    - `agents.py` 문항분석 완료 후 title이 기본값이면 `"문항분석 {n}개 - MM.DD"` 로 갱신
+16. [ ] 전체 통합 테스트
 
 ---
 
@@ -578,3 +586,4 @@ ChitkeyError(Exception)              # 모든 커스텀 예외의 base
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 0.1 | 2026-04-27 | Initial draft | YUBIN-githubb |
+| 0.2 | 2026-05-01 | 채팅 제목 관리 기능 추가 (FR-05a/05b, PATCH /chats/{id}, 에이전트 자동 제목 갱신) | YUBIN-githubb |

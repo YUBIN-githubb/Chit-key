@@ -1,8 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateExperience, useUpdateExperience } from '../../hooks/useExperiences'
 import { colors } from '../../styles/colors'
 
-const ALL_TAGS = ['인턴', '프로젝트', '동아리', '대외활동', '봉사활동', '아르바이트', '학술', '기타']
+const TAG_CATEGORIES = [
+  { label: '리더십 / 조직관리', tags: ['리더십', '팀장경험', '역할분배', '동기부여', '의사결정', '위임', '목표설정', '성과관리'] },
+  { label: '협업 / 커뮤니케이션', tags: ['협업', '팀워크', '갈등관리', '설득', '경청', '이해관계조율', '피드백수용', '다양성존중'] },
+  { label: '문제해결 / 분석',     tags: ['문제해결', '원인분석', '데이터기반판단', '가설검증', '창의적접근', '트레이드오프', '우선순위판단', '논리적사고'] },
+  { label: '도전 / 실패극복',     tags: ['도전정신', '실패경험', '회복탄력성', '한계돌파', '처음시도', '불확실성대응', '피벗', '재도전'] },
+  { label: '자기개발 / 학습',     tags: ['자기주도학습', '역량개발', '자격증', '독학', '멘토링', '습관형성', '꾸준함', '성장마인드셋'] },
+  { label: '실행력 / 주도성',     tags: ['주도성', '기획', '실행력', '프로세스개선', '자동화', '일정관리', '자원관리', '결과도출'] },
+  { label: '윤리 / 책임감',       tags: ['책임감', '윤리의식', '정직', '원칙준수', '사회적책임', '고객지향', '봉사', '공정성'] },
+  { label: '맥락',                tags: ['인턴', '대외활동', '학교프로젝트', '동아리', '아르바이트', '공모전', '연구', '창업', '봉사활동', '해외경험', '군경험'] },
+]
+
+const CATEGORY_COLORS = [
+  '#1B64DA', '#7C3AED', '#0EA5E9', '#F97316',
+  '#10B981', '#0D9488', '#EC4899', '#6B7280',
+]
 
 const EMPTY = {
   name: '', role: '', period_start: '', period_end: '',
@@ -10,14 +24,27 @@ const EMPTY = {
   competency_tags: [],
 }
 
+const DRAFT_KEY = 'exp_form_draft'
+
 export default function ExperienceForm({ initial, onClose }) {
   const isEdit = !!initial
-  const [form, setForm] = useState(initial ? {
-    ...initial,
-    period_start: initial.period_start || '',
-    period_end:   initial.period_end   || '',
-  } : EMPTY)
+  const [form, setForm] = useState(() => {
+    if (initial) {
+      return { ...initial, period_start: initial.period_start || '', period_end: initial.period_end || '' }
+    }
+    // 새 경험 추가 시 임시저장된 초안이 있으면 복원
+    try {
+      const draft = sessionStorage.getItem(DRAFT_KEY)
+      if (draft) return JSON.parse(draft)
+    } catch {}
+    return EMPTY
+  })
   const [error, setError] = useState(null)
+
+  // 새 경험 작성 중 폼 변경 시 sessionStorage에 임시저장
+  useEffect(() => {
+    if (!isEdit) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form))
+  }, [form, isEdit])
 
   const createMut = useCreateExperience()
   const updateMut = useUpdateExperience()
@@ -25,12 +52,17 @@ export default function ExperienceForm({ initial, onClose }) {
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
 
-  const toggleTag = (tag) => setForm(f => ({
-    ...f,
-    competency_tags: f.competency_tags.includes(tag)
-      ? f.competency_tags.filter(t => t !== tag)
-      : [...f.competency_tags, tag],
-  }))
+  const toggleTag = (tag) => setForm(f => {
+    if (f.competency_tags.includes(tag)) {
+      return { ...f, competency_tags: f.competency_tags.filter(t => t !== tag) }
+    }
+    const category = TAG_CATEGORIES.find(c => c.tags.includes(tag))
+    const countInCategory = category
+      ? f.competency_tags.filter(t => category.tags.includes(t)).length
+      : 0
+    if (countInCategory >= 2) return f   // 카테고리당 최대 2개
+    return { ...f, competency_tags: [...f.competency_tags, tag] }
+  })
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return setError('경험 이름을 입력해 주세요')
@@ -39,7 +71,8 @@ export default function ExperienceForm({ initial, onClose }) {
 
     const body = {
       ...form,
-      period_end: form.period_end || null,
+      period_start: form.period_start + '-01',
+      period_end: form.period_end ? form.period_end + '-01' : null,
     }
 
     try {
@@ -47,6 +80,7 @@ export default function ExperienceForm({ initial, onClose }) {
         await updateMut.mutateAsync({ id: initial.id, ...body })
       } else {
         await createMut.mutateAsync(body)
+        sessionStorage.removeItem(DRAFT_KEY)
       }
       onClose()
     } catch (e) {
@@ -70,7 +104,7 @@ export default function ExperienceForm({ initial, onClose }) {
           <h3 style={{ fontSize: 18, fontWeight: 800, color: colors.TEXT_PRIMARY }}>
             {isEdit ? '경험 수정' : '경험 추가'}
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: colors.TEXT_SECONDARY }}>✕</button>
+          <button onClick={() => { sessionStorage.removeItem(DRAFT_KEY); onClose() }} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: colors.TEXT_SECONDARY }}>✕</button>
         </div>
 
         {/* 기본 정보 */}
@@ -96,21 +130,47 @@ export default function ExperienceForm({ initial, onClose }) {
 
         {/* 태그 */}
         <Section label="역량 태그">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {ALL_TAGS.map(tag => {
-              const selected = form.competency_tags.includes(tag)
+          <p style={{ fontSize: 12, color: colors.TEXT_SECONDARY, marginBottom: 14 }}>
+            해당되는 것만 골라주세요. 카테고리당 최대 2개까지 선택할 수 있어요.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {TAG_CATEGORIES.map(({ label, tags }, ci) => {
+              const color = CATEGORY_COLORS[ci]
+              const selectedInCategory = tags.filter(t => form.competency_tags.includes(t)).length
+              const atLimit = selectedInCategory >= 2
               return (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  style={{
-                    padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                    border: `1.5px solid ${selected ? colors.PRIMARY : colors.BORDER}`,
-                    background: selected ? colors.PRIMARY_LIGHT : colors.SURFACE,
-                    color: selected ? colors.PRIMARY : colors.TEXT_SECONDARY,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                >{tag}</button>
+                <div key={label}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color, marginBottom: 7, letterSpacing: '0.2px' }}>
+                    {label}
+                    {selectedInCategory > 0 && (
+                      <span style={{ fontWeight: 400, color: atLimit ? color : colors.TEXT_SECONDARY, marginLeft: 6 }}>
+                        {selectedInCategory}/2
+                      </span>
+                    )}
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {tags.map(tag => {
+                      const selected = form.competency_tags.includes(tag)
+                      const disabled = !selected && atLimit
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          disabled={disabled}
+                          style={{
+                            padding: '5px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                            border: `1.5px solid ${selected ? color : colors.BORDER}`,
+                            background: selected ? color + '18' : colors.SURFACE,
+                            color: selected ? color : disabled ? colors.BORDER : colors.TEXT_SECONDARY,
+                            cursor: disabled ? 'not-allowed' : 'pointer',
+                            opacity: disabled ? 0.45 : 1,
+                            transition: 'all 0.15s',
+                          }}
+                        >{tag}</button>
+                      )
+                    })}
+                  </div>
+                </div>
               )
             })}
           </div>
@@ -123,7 +183,7 @@ export default function ExperienceForm({ initial, onClose }) {
         )}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{
+          <button onClick={() => { sessionStorage.removeItem(DRAFT_KEY); onClose() }} style={{
             flex: 1, padding: '13px 0', borderRadius: 12,
             background: colors.BG, border: `1.5px solid ${colors.BORDER}`,
             fontSize: 14, fontWeight: 600, color: colors.TEXT_SECONDARY, cursor: 'pointer',

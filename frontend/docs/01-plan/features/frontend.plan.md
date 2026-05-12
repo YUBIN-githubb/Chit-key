@@ -121,7 +121,9 @@
 | FR-15 | 마이페이지 — API Key 현황·수정·삭제 | Medium | Done |
 | FR-16 | 전체 에러 상태 처리 (토스 스타일 에러 메시지) | Medium | Done |
 | FR-17 | Google OAuth 프로필 이미지 표시 — 사이드바·마이페이지 아바타 | Medium | Pending |
-| FR-18 | 채팅 이력 페이지 — 채팅 목록·선택·삭제 (`GET/DELETE /chats`) | High | Pending |
+| FR-18 | 채팅 이력 페이지 — 채팅 목록·선택·삭제 (`GET/DELETE /chats`). 목록에 **제목** 표시 | High | Pending |
+| FR-18a | 채팅 제목 인라인 편집 — HistoryScreen 제목 더블클릭 시 input 전환 → Enter/blur 시 `PATCH /chats/{id}` 호출 | High | Pending |
+| FR-18b | 기업분석 완료 후 채팅 목록 자동 갱신 — 에이전트 mutation 성공 시 `invalidateQueries(['chats'])` 호출해 제목 반영 | High | Pending |
 | FR-19 | Artifacts 관리 페이지 — 전체 산출물 목록, agent_type별 필터 (`GET /artifacts`) | High | Pending |
 | FR-20 | Artifact 첨부 기능 — 에이전트 입력 시 이전 산출물을 picker UI로 선택 첨부 | High | Pending |
 | FR-21 | 글래스모피즘 디자인 — 사이드바·카드·모달에 투명도+blur 적용 | Medium | Pending |
@@ -519,6 +521,10 @@ claude-design 데모의 보라/인디고 계열(`#5468FF`)을 **토스뱅크 스
 - [x] **10-6** 산출물 탭 — 전체 artifact 목록. agent_type 필터 칩. 클릭 시 내용 펼침
 - [x] **10-7** `AppShell` 사이드바 — "이력" 탭 추가 (아이콘: 🗂️)
 - [x] **10-8** `App.jsx` — `tab === 'history'` 분기 추가. ChatScreen에 `chatId prop` 전달 구조로 변경
+- [ ] **10-9** `api.js`에 `updateChatTitle(chatId, title)` 함수 추가 (`PATCH /chats/{id}`)
+- [ ] **10-10** `useChats.js`에 `useUpdateChatTitle` mutation 추가 — 성공 시 `invalidateQueries(['chats'])` 
+- [ ] **10-11** `HistoryScreen` 채팅 이력 탭 — 제목 더블클릭 시 `<input>` 전환, Enter/blur 시 저장. 저장 중 로딩 표시
+- [ ] **10-12** `useAgents.js` 기업분석·문항분석 mutation 성공 콜백에 `invalidateQueries(['chats'])` 추가 — 자동 갱신된 제목이 목록에 즉시 반영
 
   **검증:** 이력 탭 진입 → 채팅 선택 → 해당 채팅의 메시지 확인. Artifact 필터 동작 확인
 
@@ -617,3 +623,4 @@ claude-design 데모의 보라/인디고 계열(`#5468FF`)을 **토스뱅크 스
 | 0.2 | 2026-04-30 | Option C 확정, 데모 vs 백엔드 차이 명시, 토스 블루 디자인 추가 | YUBIN-githubb |
 | 0.3 | 2026-04-30 | 전체 일관성 정비, 7 Phase 38개 세부 스텝으로 구현 계획 세분화 | YUBIN-githubb |
 | 0.4 | 2026-04-30 | Phase 1~12 완료 체크, Phase 13 버그수정 추가 | YUBIN-githubb |
+| 0.5 | 2026-05-01 | 채팅 제목 관리 기능 추가 (FR-18a/18b, Phase 10 스텝 확장) | YUBIN-githubb |

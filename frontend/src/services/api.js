@@ -56,6 +56,9 @@ export const getChats = () => apiFetch('/api/v1/chats')
 
 export const getChat = (chatId) => apiFetch(`/api/v1/chats/${chatId}`)
 
+export const updateChatTitle = (chatId, title) =>
+  apiFetch(`/api/v1/chats/${chatId}`, { method: 'PATCH', body: JSON.stringify({ title }) })
+
 export const deleteChat = (chatId) =>
   apiFetch(`/api/v1/chats/${chatId}`, { method: 'DELETE' })
 

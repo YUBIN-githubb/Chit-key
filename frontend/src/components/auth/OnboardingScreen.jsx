@@ -100,7 +100,7 @@ function Step1({ nickname, setNickname, onNext, loading, error, setError }) {
 
       <input
         type="text"
-        placeholder="예: 유빈, 지원자"
+        placeholder="예: 합격요정, 취뽀왕"
         value={nickname}
         onChange={e => { setNickname(e.target.value); setError(null) }}
         onKeyDown={e => e.key === 'Enter' && onNext()}
@@ -131,12 +131,12 @@ function Step2({ apiKey, setApiKey, onComplete, loading, error, setError }) {
         Key는 암호화해서 안전하게 저장돼요.
       </p>
       <a
-        href="https://console.anthropic.com/"
+        href="https://moon-yubin.notion.site/API-key-35e217e465da804dac0ac7bee8b1f066"
         target="_blank"
         rel="noreferrer"
         style={{ fontSize: 13, color: colors.PRIMARY, fontWeight: 600, display: 'block', marginBottom: 28 }}
       >
-        아직 없다면 여기서 발급할 수 있어요 →
+        📖 API Key 발급 방법 가이드 보기 →
       </a>
 
       <div style={{ position: 'relative' }}>

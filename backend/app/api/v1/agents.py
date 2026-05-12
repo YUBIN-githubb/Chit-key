@@ -60,6 +60,17 @@ def _save_message(*, chat_id: str, role: str, content: str, agent_type: str | No
     }).execute()
 
 
+def _auto_update_chat_title(chat_id: str, new_title: str):
+    """현재 제목이 기본값(자동 생성)인 경우에만 제목을 갱신한다."""
+    from app.api.v1.chats import _is_default_title
+    supabase = get_supabase()
+    chat = supabase.table("chats").select("title").eq("id", chat_id).single().execute()
+    if not chat.data:
+        return
+    if _is_default_title(chat.data.get("title", "") or ""):
+        supabase.table("chats").update({"title": new_title}).eq("id", chat_id).execute()
+
+
 # ── 기업분석 ──────────────────────────────────────
 
 class CompanyAnalyzeRequest(BaseModel):
@@ -99,6 +110,8 @@ async def company_analyze(
     _save_message(chat_id=body.chat_id, role="assistant", content=result_text, agent_type="company-analyze", artifact_id=artifact["id"])
     logger.info("[API] 어시스턴트 메시지 저장 완료 | company-analyze 전체 완료")
 
+    _auto_update_chat_title(body.chat_id, f"{body.company} {body.position} 자소서")
+
     return {"artifact": artifact, "result": result_text}
 
 
@@ -114,7 +127,6 @@ class QuestionAnalyzeRequest(BaseModel):
     company: str
     position: str
     questions: list[QuestionItem]
-    company_artifact_id: str | None = None
 
 
 @router.post("/question-analyze")
@@ -124,21 +136,12 @@ async def question_analyze(
 ):
     api_key = _get_api_key(current_user["id"])
 
-    company_artifact = None
-    if body.company_artifact_id:
-        supabase = get_supabase()
-        res = supabase.table("artifacts").select("content").eq("id", body.company_artifact_id).eq("user_id", current_user["id"]).single().execute()
-        if not res.data:
-            raise NotFoundError("기업분석 산출물을 찾을 수 없습니다.")
-        company_artifact = res.data["content"]
-
     _save_message(chat_id=body.chat_id, role="user", content=f"{body.company} 문항 분석 ({len(body.questions)}개)", agent_type="question-analyze", artifact_id=None)
 
     result_text = run_question_analyze(
         company=body.company,
         position=body.position,
         questions=body.questions,
-        company_artifact=company_artifact,
         api_key=api_key,
     )
 
@@ -153,6 +156,8 @@ async def question_analyze(
     )
     _save_message(chat_id=body.chat_id, role="assistant", content=result_text, agent_type="question-analyze", artifact_id=artifact["id"])
 
+    _auto_update_chat_title(body.chat_id, f"{body.company} {body.position} 자소서")
+
     return {"artifact": artifact, "result": result_text}
 
 
@@ -163,6 +168,7 @@ class EssayWriterRequest(BaseModel):
     company: str
     position: str
     questions: list[QuestionItem]
+    company_artifact_id: str | None = None
     question_artifact_id: str | None = None
 
 
@@ -172,10 +178,17 @@ async def essay_writer(
     current_user: dict = Depends(get_onboarded_user),
 ):
     api_key = _get_api_key(current_user["id"])
+    supabase = get_supabase()
+
+    company_artifact = None
+    if body.company_artifact_id:
+        res = supabase.table("artifacts").select("content").eq("id", body.company_artifact_id).eq("user_id", current_user["id"]).single().execute()
+        if not res.data:
+            raise NotFoundError("기업분석 산출물을 찾을 수 없습니다.")
+        company_artifact = res.data["content"]
 
     question_artifact = None
     if body.question_artifact_id:
-        supabase = get_supabase()
         res = supabase.table("artifacts").select("content").eq("id", body.question_artifact_id).eq("user_id", current_user["id"]).single().execute()
         if not res.data:
             raise NotFoundError("문항분석 산출물을 찾을 수 없습니다.")
@@ -188,6 +201,7 @@ async def essay_writer(
         company=body.company,
         position=body.position,
         questions=body.questions,
+        company_artifact=company_artifact,
         question_artifact=question_artifact,
         api_key=api_key,
     )
